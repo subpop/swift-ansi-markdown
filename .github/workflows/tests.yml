@@ -1,0 +1,52 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: "6.0"
+        
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v4
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+          
+    - name: Build
+      run: swift build
+      
+    - name: Run tests
+      run: swift test --parallel
+      
+    - name: Generate test report
+      run: |
+        brew install llvm lcov
+        swift test --parallel --enable-code-coverage
+        mkdir -p .build/debug/codecov
+        llvm-cov export -format=lcov .build/debug/ANSIMarkdownTests.xctest/Contents/MacOS/ANSIMarkdownTests -instr-profile .build/debug/codecov/default.profdata > .build/debug/codecov/lcov_raw.info
+        # Filter out checkouts and other unwanted paths
+        lcov --remove .build/debug/codecov/lcov_raw.info '*/.build/*' '*/Tests/*' --output-file .build/debug/codecov/lcov.info
+        
+    - name: Upload coverage to Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        file: .build/debug/codecov/lcov.info
+        fail-on-error: false 
