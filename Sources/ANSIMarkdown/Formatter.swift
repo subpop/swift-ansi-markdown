@@ -65,6 +65,7 @@ public protocol MarkdownFormatter {
     func getOutput() -> String?
     func reset()
     func clearProcessed()
+    func finalize()
 }
 
 extension ANSIMarkdownFormatter: MarkdownFormatter {}
@@ -146,6 +147,13 @@ public class ANSIMarkdownFormatter {
             }
             processToken(token)
         }
+    }
+
+    /// Finalize the formatter by flushing any remaining content and resetting
+    /// the state.
+    public func finalize() {
+        format()
+        reset()
     }
 
     /// Process a single token and update formatting state
@@ -622,6 +630,13 @@ public class RawMarkdownFormatter {
             }
             processToken(token)
         }
+    }
+
+    /// Finalize the formatter by flushing any remaining content and resetting
+    /// the state.
+    public func finalize() {
+        format()
+        reset()
     }
 
     /// Process a single token and output its raw value
