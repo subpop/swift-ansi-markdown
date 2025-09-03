@@ -91,6 +91,7 @@ private struct FormattingState {
     var inCodeBlock = false
     var inBlockQuote = false
     var headingLevel = 0
+    var inHeading = false
     var atLineStart = true
 
     mutating func reset() {
@@ -100,6 +101,7 @@ private struct FormattingState {
         inCodeBlock = false
         inBlockQuote = false
         headingLevel = 0
+        inHeading = false
         atLineStart = true
     }
 }
@@ -265,6 +267,8 @@ public class ANSIMarkdownFormatter {
             output.write(ANSICode.blue)
             output.write(ANSICode.underline)
             writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
         }
     }
 
@@ -274,6 +278,8 @@ public class ANSIMarkdownFormatter {
         } else {
             output.write(ANSICode.magenta)
             writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
         }
     }
 
@@ -307,6 +313,7 @@ public class ANSIMarkdownFormatter {
         // Apply heading formatting if we're in a heading
         if state.headingLevel > 0 && state.atLineStart {
             applyHeadingFormatting(level: state.headingLevel)
+            state.inHeading = true
             state.headingLevel = 0  // Reset after applying
         }
 
@@ -323,6 +330,13 @@ public class ANSIMarkdownFormatter {
         if state.inBlockQuote {
             output.write(ANSICode.reset)
             state.inBlockQuote = false
+            restoreActiveFormatting()
+        }
+
+        // Reset heading formatting at end of line
+        if state.inHeading {
+            output.write(ANSICode.reset)
+            state.inHeading = false
             restoreActiveFormatting()
         }
 
@@ -355,6 +369,10 @@ public class ANSIMarkdownFormatter {
     }
 
     private func restoreActiveFormatting() {
+        if state.inHeading {
+            // Don't restore heading formatting - it should only apply to the heading line
+            return
+        }
         if state.inStrongEmphasis {
             output.write(ANSICode.bold)
         }
