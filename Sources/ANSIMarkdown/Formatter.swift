@@ -58,6 +58,18 @@ public struct ANSICode {
     public static let resetStrikethrough = "\u{001B}[29m"
 }
 
+/// Protocol for markdown formatters
+public protocol MarkdownFormatter {
+    func add(_ text: String)
+    func format()
+    func getOutput() -> String?
+    func reset()
+    func clearProcessed()
+}
+
+extension ANSIMarkdownFormatter: MarkdownFormatter {}
+extension RawMarkdownFormatter: MarkdownFormatter {}
+
 /// Protocol for objects that can receive formatted output
 public protocol TextOutputStream {
     mutating func write(_ string: String)
