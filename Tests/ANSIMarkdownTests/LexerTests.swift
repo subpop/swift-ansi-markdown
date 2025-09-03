@@ -642,4 +642,65 @@ import Testing
         #expect(token3.type == .text)
         #expect(token3.value == "more")
     }
+
+    @Test("Triple backticks not at line start")
+    func testTripleBackticksNotAtLineStart() {
+        let lexer = Lexer()
+        lexer.add("text ```")
+
+        // The key test: ``` not at line start should be parsed as individual ` tokens
+        // not as a single codeBlock token
+
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "text")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .whitespace)
+        #expect(token2.value == " ")
+
+        // The ``` should be parsed as three individual ` tokens, not a codeBlock
+        let token3 = lexer.next()
+        #expect(token3.type == .code)
+        #expect(token3.value == "`")
+
+        let token4 = lexer.next()
+        #expect(token4.type == .code)
+        #expect(token4.value == "`")
+
+        let token5 = lexer.next()
+        #expect(token5.type == .code)
+        #expect(token5.value == "`")
+
+        let eofToken = lexer.next()
+        #expect(eofToken.type == .eof)
+    }
+
+    @Test("Fenced code blocks at line start")
+    func testFencedCodeBlocksAtLineStart() {
+        let lexer = Lexer()
+        lexer.add("```\ncode\n```")
+
+        // ``` at line start should still be treated as code block tokens
+        let token1 = lexer.next()
+        #expect(token1.type == .codeBlock)
+        #expect(token1.value == "```")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .newline)
+
+        let token3 = lexer.next()
+        #expect(token3.type == .text)
+        #expect(token3.value == "code")
+
+        let token4 = lexer.next()
+        #expect(token4.type == .newline)
+
+        let token5 = lexer.next()
+        #expect(token5.type == .codeBlock)
+        #expect(token5.value == "```")
+
+        let eofToken = lexer.next()
+        #expect(eofToken.type == .eof)
+    }
 }

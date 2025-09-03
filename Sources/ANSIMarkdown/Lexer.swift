@@ -89,8 +89,8 @@ public class Lexer {
             return thematicBreakToken
         }
 
-        // Check for code blocks (```)
-        if remainingText.hasPrefix("```") {
+        // Check for code blocks (```) - but only at line start
+        if remainingText.hasPrefix("```") && atLineStart {
             atLineStart = false
             let token = Token(type: .codeBlock, value: "```", position: position)
             advancePosition(by: 3)
