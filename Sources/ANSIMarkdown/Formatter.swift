@@ -160,11 +160,41 @@ public class ANSIMarkdownFormatter {
         case .blockQuote:
             handleBlockQuote(token)
 
-        case .link:
-            handleLink(token)
+        case .linkOpenBracket:
+            handleLinkOpenBracket(token)
 
-        case .image:
-            handleImage(token)
+        case .linkText:
+            handleLinkText(token)
+
+        case .linkCloseBracket:
+            handleLinkCloseBracket(token)
+
+        case .linkOpenParen:
+            handleLinkOpenParen(token)
+
+        case .linkURL:
+            handleLinkURL(token)
+
+        case .linkCloseParen:
+            handleLinkCloseParen(token)
+
+        case .imageOpenBracket:
+            handleImageOpenBracket(token)
+
+        case .imageAltText:
+            handleImageAltText(token)
+
+        case .imageCloseBracket:
+            handleImageCloseBracket(token)
+
+        case .imageOpenParen:
+            handleImageOpenParen(token)
+
+        case .imageURL:
+            handleImageURL(token)
+
+        case .imageCloseParen:
+            handleImageCloseParen(token)
 
         case .thematicBreak:
             handleThematicBreak(token)
@@ -285,7 +315,7 @@ public class ANSIMarkdownFormatter {
         }
     }
 
-    private func handleLink(_ token: Token) {
+    private func handleLinkOpenBracket(_ token: Token) {
         if state.inCode || state.inCodeBlock {
             writeText(token.value)
         } else {
@@ -297,7 +327,122 @@ public class ANSIMarkdownFormatter {
         }
     }
 
-    private func handleImage(_ token: Token) {
+    private func handleLinkText(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.brightBlue)
+            output.write(ANSICode.underline)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleLinkCloseBracket(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.brightBlue)
+            output.write(ANSICode.underline)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleLinkOpenParen(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.brightBlue)
+            output.write(ANSICode.underline)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleLinkURL(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.brightBlue)
+            output.write(ANSICode.underline)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleLinkCloseParen(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.brightBlue)
+            output.write(ANSICode.underline)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleImageOpenBracket(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.magenta)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleImageAltText(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.magenta)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleImageCloseBracket(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.magenta)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleImageOpenParen(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.magenta)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleImageURL(_ token: Token) {
+        if state.inCode || state.inCodeBlock {
+            writeText(token.value)
+        } else {
+            output.write(ANSICode.magenta)
+            writeText(token.value)
+            output.write(ANSICode.reset)
+            restoreActiveFormatting()
+        }
+    }
+
+    private func handleImageCloseParen(_ token: Token) {
         if state.inCode || state.inCodeBlock {
             writeText(token.value)
         } else {

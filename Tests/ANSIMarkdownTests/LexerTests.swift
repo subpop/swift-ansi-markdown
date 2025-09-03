@@ -204,19 +204,60 @@ import Testing
         lexer.add("[link text]")
 
         let token1 = lexer.next()
-        #expect(token1.type == .link)
+        #expect(token1.type == .linkOpenBracket)
         #expect(token1.value == "[")
 
         let token2 = lexer.next()
-        #expect(token2.type == .text)
+        #expect(token2.type == .linkText)
         #expect(token2.value == "link")
 
         let token3 = lexer.next()
         #expect(token3.type == .whitespace)
 
         let token4 = lexer.next()
-        #expect(token4.type == .text)
-        #expect(token4.value == "text]")
+        #expect(token4.type == .linkText)
+        #expect(token4.value == "text")
+
+        let token5 = lexer.next()
+        #expect(token5.type == .linkCloseBracket)
+        #expect(token5.value == "]")
+    }
+
+    @Test("Full link tokenization")
+    func testFullLinkTokenization() {
+        let lexer = Lexer()
+        lexer.add("[link text](https://example.com)")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .linkOpenBracket)
+        #expect(token1.value == "[")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .linkText)
+        #expect(token2.value == "link")
+
+        let token3 = lexer.next()
+        #expect(token3.type == .whitespace)
+
+        let token4 = lexer.next()
+        #expect(token4.type == .linkText)
+        #expect(token4.value == "text")
+
+        let token5 = lexer.next()
+        #expect(token5.type == .linkCloseBracket)
+        #expect(token5.value == "]")
+
+        let token6 = lexer.next()
+        #expect(token6.type == .linkOpenParen)
+        #expect(token6.value == "(")
+
+        let token7 = lexer.next()
+        #expect(token7.type == .linkURL)
+        #expect(token7.value == "https://example.com")
+
+        let token8 = lexer.next()
+        #expect(token8.type == .linkCloseParen)
+        #expect(token8.value == ")")
     }
 
     @Test("Image tokenization")
@@ -225,19 +266,191 @@ import Testing
         lexer.add("![alt text]")
 
         let token1 = lexer.next()
-        #expect(token1.type == .image)
+        #expect(token1.type == .imageOpenBracket)
         #expect(token1.value == "![")
 
         let token2 = lexer.next()
-        #expect(token2.type == .text)
+        #expect(token2.type == .imageAltText)
         #expect(token2.value == "alt")
 
         let token3 = lexer.next()
         #expect(token3.type == .whitespace)
 
         let token4 = lexer.next()
-        #expect(token4.type == .text)
-        #expect(token4.value == "text]")
+        #expect(token4.type == .imageAltText)
+        #expect(token4.value == "text")
+
+        let token5 = lexer.next()
+        #expect(token5.type == .imageCloseBracket)
+        #expect(token5.value == "]")
+    }
+
+    @Test("Full image tokenization")
+    func testFullImageTokenization() {
+        let lexer = Lexer()
+        lexer.add("![alt text](image.png)")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .imageOpenBracket)
+        #expect(token1.value == "![")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .imageAltText)
+        #expect(token2.value == "alt")
+
+        let token3 = lexer.next()
+        #expect(token3.type == .whitespace)
+
+        let token4 = lexer.next()
+        #expect(token4.type == .imageAltText)
+        #expect(token4.value == "text")
+
+        let token5 = lexer.next()
+        #expect(token5.type == .imageCloseBracket)
+        #expect(token5.value == "]")
+
+        let token6 = lexer.next()
+        #expect(token6.type == .imageOpenParen)
+        #expect(token6.value == "(")
+
+        let token7 = lexer.next()
+        #expect(token7.type == .imageURL)
+        #expect(token7.value == "image.png")
+
+        let token8 = lexer.next()
+        #expect(token8.type == .imageCloseParen)
+        #expect(token8.value == ")")
+    }
+
+    @Test("Malformed link tokenization")
+    func testMalformedLinkTokenization() {
+        let lexer = Lexer()
+        lexer.add("[incomplete link")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .linkOpenBracket)
+        #expect(token1.value == "[")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .linkText)
+        #expect(token2.value == "incomplete")
+
+        let token3 = lexer.next()
+        #expect(token3.type == .whitespace)
+
+        let token4 = lexer.next()
+        #expect(token4.type == .linkText)
+        #expect(token4.value == "link")
+
+        // Should end normally without throwing errors
+        let token5 = lexer.next()
+        #expect(token5.type == .eof)
+    }
+
+    @Test("Standalone brackets and parentheses")
+    func testStandaloneBracketsAndParentheses() {
+        let lexer = Lexer()
+        lexer.add("] ( ) [")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "]")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .whitespace)
+
+        let token3 = lexer.next()
+        #expect(token3.type == .text)
+        #expect(token3.value == "(")
+
+        let token4 = lexer.next()
+        #expect(token4.type == .whitespace)
+
+        let token5 = lexer.next()
+        #expect(token5.type == .text)
+        #expect(token5.value == ")")
+
+        let token6 = lexer.next()
+        #expect(token6.type == .whitespace)
+
+        let token7 = lexer.next()
+        #expect(token7.type == .linkOpenBracket)
+        #expect(token7.value == "[")
+    }
+
+    @Test("Mixed links and parenthesized text")
+    func testMixedLinksAndParenthesizedText() {
+        let lexer = Lexer()
+        lexer.add("Check [link](url) and some (parenthesized text) here")
+
+        // Check link
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "Check")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .whitespace)
+
+        // [link](url) - should be parsed as link tokens
+        let token3 = lexer.next()
+        #expect(token3.type == .linkOpenBracket)
+        #expect(token3.value == "[")
+
+        let token4 = lexer.next()
+        #expect(token4.type == .linkText)
+        #expect(token4.value == "link")
+
+        let token5 = lexer.next()
+        #expect(token5.type == .linkCloseBracket)
+        #expect(token5.value == "]")
+
+        let token6 = lexer.next()
+        #expect(token6.type == .linkOpenParen)
+        #expect(token6.value == "(")
+
+        let token7 = lexer.next()
+        #expect(token7.type == .linkURL)
+        #expect(token7.value == "url")
+
+        let token8 = lexer.next()
+        #expect(token8.type == .linkCloseParen)
+        #expect(token8.value == ")")
+
+        let token9 = lexer.next()
+        #expect(token9.type == .whitespace)
+
+        let token10 = lexer.next()
+        #expect(token10.type == .text)
+        #expect(token10.value == "and")
+
+        let token11 = lexer.next()
+        #expect(token11.type == .whitespace)
+
+        let token12 = lexer.next()
+        #expect(token12.type == .text)
+        #expect(token12.value == "some")
+
+        let token13 = lexer.next()
+        #expect(token13.type == .whitespace)
+
+        // (parenthesized text) - should be parsed as regular text tokens
+        let token14 = lexer.next()
+        #expect(token14.type == .text)
+        #expect(token14.value == "(parenthesized")
+
+        let token15 = lexer.next()
+        #expect(token15.type == .whitespace)
+
+        let token16 = lexer.next()
+        #expect(token16.type == .text)
+        #expect(token16.value == "text)")
+
+        let token17 = lexer.next()
+        #expect(token17.type == .whitespace)
+
+        let token18 = lexer.next()
+        #expect(token18.type == .text)
+        #expect(token18.value == "here")
     }
 
     @Test("Newline tokenization")

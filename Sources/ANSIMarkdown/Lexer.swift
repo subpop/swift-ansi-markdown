@@ -35,8 +35,18 @@ public enum TokenType: String, CaseIterable {
     case codeBlock = "```"
     case codeBlockLanguage = "```lang"
     case thematicBreak = "---"
-    case link = "["
-    case image = "!["
+    case linkOpenBracket = "["
+    case linkCloseBracket = "]"
+    case linkOpenParen = "("
+    case linkCloseParen = ")"
+    case linkText = "linkText"
+    case linkURL = "linkURL"
+    case imageOpenBracket = "!["
+    case imageCloseBracket = "img]"
+    case imageOpenParen = "img("
+    case imageCloseParen = "img)"
+    case imageAltText = "imageAltText"
+    case imageURL = "imageURL"
     case text = ""
     case newline = "\n"
     case whitespace = " "
@@ -50,6 +60,21 @@ public class Lexer {
     private var atLineStart: Bool = true
     private var inCodeBlock: Bool = false
     private var expectingCodeBlockLanguage: Bool = false
+    private var linkParsingState: LinkParsingState = .none
+
+    private enum LinkParsingState {
+        case none
+        case expectingLinkText
+        case expectingLinkCloseBracket
+        case expectingLinkOpenParen
+        case expectingLinkURL
+        case expectingLinkCloseParen
+        case expectingImageAltText
+        case expectingImageCloseBracket
+        case expectingImageOpenParen
+        case expectingImageURL
+        case expectingImageCloseParen
+    }
 
     public init() {
         self.currentIndex = buffer.startIndex
@@ -118,7 +143,8 @@ public class Lexer {
         // Check for images (![)
         if remainingText.hasPrefix("![") {
             atLineStart = false
-            let token = Token(type: .image, value: "![", position: position)
+            linkParsingState = .expectingImageAltText
+            let token = Token(type: .imageOpenBracket, value: "![", position: position)
             advancePosition(by: 2)
             return token
         }
@@ -181,6 +207,8 @@ public class Lexer {
                 if expectingCodeBlockLanguage {
                     expectingCodeBlockLanguage = false
                 }
+                // Reset link parsing state on newlines - links/images don't span lines
+                linkParsingState = .none
                 atLineStart = true
                 return Token(type: .newline, value: String(char), position: tokenStart)
             default:
@@ -202,12 +230,18 @@ public class Lexer {
             return Token(type: .code, value: String(char), position: tokenStart)
         case "[":
             atLineStart = false
-            return Token(type: .link, value: String(char), position: tokenStart)
+            linkParsingState = .expectingLinkText
+            return Token(type: .linkOpenBracket, value: String(char), position: tokenStart)
+        case "]":
+            atLineStart = false
+            return handleCloseBracket(at: tokenStart)
         case "\n":
             // If we were expecting a language but hit a newline, there's no language
             if expectingCodeBlockLanguage {
                 expectingCodeBlockLanguage = false
             }
+            // Reset link parsing state on newlines - links/images don't span lines
+            linkParsingState = .none
             atLineStart = true
             return Token(type: .newline, value: String(char), position: tokenStart)
         case " ", "\t":
@@ -220,6 +254,47 @@ public class Lexer {
         }
     }
 
+    private func handleCloseBracket(at tokenStart: Int) -> Token {
+        switch linkParsingState {
+        case .expectingLinkCloseBracket:
+            linkParsingState = .expectingLinkOpenParen
+            return Token(type: .linkCloseBracket, value: "]", position: tokenStart)
+        case .expectingImageCloseBracket:
+            linkParsingState = .expectingImageOpenParen
+            return Token(type: .imageCloseBracket, value: "]", position: tokenStart)
+        default:
+            // Reset state if we encounter unexpected bracket
+            linkParsingState = .none
+            return Token(type: .text, value: "]", position: tokenStart)
+        }
+    }
+
+    private func handleOpenParen(at tokenStart: Int) -> Token {
+        switch linkParsingState {
+        case .expectingLinkOpenParen:
+            linkParsingState = .expectingLinkURL
+            return Token(type: .linkOpenParen, value: "(", position: tokenStart)
+        case .expectingImageOpenParen:
+            linkParsingState = .expectingImageURL
+            return Token(type: .imageOpenParen, value: "(", position: tokenStart)
+        default:
+            return Token(type: .text, value: "(", position: tokenStart)
+        }
+    }
+
+    private func handleCloseParen(at tokenStart: Int) -> Token {
+        switch linkParsingState {
+        case .expectingLinkCloseParen:
+            linkParsingState = .none
+            return Token(type: .linkCloseParen, value: ")", position: tokenStart)
+        case .expectingImageCloseParen:
+            linkParsingState = .none
+            return Token(type: .imageCloseParen, value: ")", position: tokenStart)
+        default:
+            return Token(type: .text, value: ")", position: tokenStart)
+        }
+    }
+
     private func parseTextToken(startingWith firstChar: Character, at tokenStart: Int) -> Token {
         var textValue = String(firstChar)
         advancePosition()  // Move past the first character
@@ -229,7 +304,10 @@ public class Lexer {
             let char = buffer[currentIndex]
 
             // Stop at markdown special characters or whitespace
-            if isMarkdownSpecialChar(char) || char.isWhitespace {
+            // Also stop at brackets and parentheses when in link parsing state
+            if isMarkdownSpecialChar(char) || char.isWhitespace
+                || (linkParsingState != .none && (char == "]" || char == "(" || char == ")"))
+            {
                 break
             }
 
@@ -249,11 +327,71 @@ public class Lexer {
             return Token(type: .codeBlockLanguage, value: textValue, position: tokenStart)
         }
 
-        return Token(type: .text, value: textValue, position: tokenStart)
+        // Handle parentheses when in appropriate link parsing states
+        if linkParsingState != .none {
+            if textValue == "(" {
+                return handleOpenParen(at: tokenStart)
+            } else if textValue == ")" {
+                return handleCloseParen(at: tokenStart)
+            }
+            // If text starts with ( or ) but has more content, we need to split it
+            if textValue.hasPrefix("(") && textValue.count > 1 {
+                // Put back the extra characters and just handle the opening paren
+                let extraChars = String(textValue.dropFirst())
+                // We need to rewind the buffer to put back the extra characters
+                for _ in 0..<extraChars.count {
+                    if position > 0 {
+                        position -= 1
+                        currentIndex = buffer.index(before: currentIndex)
+                    }
+                }
+                return handleOpenParen(at: tokenStart)
+            } else if textValue.hasSuffix(")") && textValue.count > 1 {
+                // Similar logic for closing paren
+                let beforeParen = String(textValue.dropLast())
+                // Rewind to put back the closing paren
+                if position > 0 {
+                    position -= 1
+                    currentIndex = buffer.index(before: currentIndex)
+                }
+                // Return the text before the paren, and the paren will be handled next
+                return Token(type: .text, value: beforeParen, position: tokenStart)
+            }
+        }
+
+        // Check if we're parsing link/image content
+        switch linkParsingState {
+        case .expectingLinkText:
+            linkParsingState = .expectingLinkCloseBracket
+            return Token(type: .linkText, value: textValue, position: tokenStart)
+        case .expectingLinkCloseBracket:
+            // Continue parsing link text after whitespace
+            return Token(type: .linkText, value: textValue, position: tokenStart)
+        case .expectingImageAltText:
+            linkParsingState = .expectingImageCloseBracket
+            return Token(type: .imageAltText, value: textValue, position: tokenStart)
+        case .expectingImageCloseBracket:
+            // Continue parsing image alt text after whitespace
+            return Token(type: .imageAltText, value: textValue, position: tokenStart)
+        case .expectingLinkURL:
+            linkParsingState = .expectingLinkCloseParen
+            return Token(type: .linkURL, value: textValue, position: tokenStart)
+        case .expectingLinkCloseParen:
+            // Continue parsing link URL after whitespace
+            return Token(type: .linkURL, value: textValue, position: tokenStart)
+        case .expectingImageURL:
+            linkParsingState = .expectingImageCloseParen
+            return Token(type: .imageURL, value: textValue, position: tokenStart)
+        case .expectingImageCloseParen:
+            // Continue parsing image URL after whitespace
+            return Token(type: .imageURL, value: textValue, position: tokenStart)
+        default:
+            return Token(type: .text, value: textValue, position: tokenStart)
+        }
     }
 
     private func isMarkdownSpecialChar(_ char: Character) -> Bool {
-        return [">", "#", "*", "`", "[", "!"].contains(char)
+        return [">", "#", "*", "`", "[", "]", "!"].contains(char)
     }
 
     private func advancePosition(by count: Int = 1) {
@@ -275,6 +413,7 @@ public class Lexer {
         atLineStart = true
         inCodeBlock = false
         expectingCodeBlockLanguage = false
+        linkParsingState = .none
     }
 
     public func getBuffer() -> String {
@@ -299,5 +438,6 @@ public class Lexer {
         atLineStart = true
         inCodeBlock = false
         expectingCodeBlockLanguage = false
+        linkParsingState = .none
     }
 }
