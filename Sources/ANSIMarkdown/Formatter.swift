@@ -235,7 +235,6 @@ public class ANSIMarkdownFormatter {
         state.inCode.toggle()
         if state.inCode {
             output.write(ANSICode.cyan)
-            output.write(ANSICode.dim)
         } else {
             output.write(ANSICode.reset)
             // Restore any active formatting
@@ -290,7 +289,7 @@ public class ANSIMarkdownFormatter {
         if state.inCode || state.inCodeBlock {
             writeText(token.value)
         } else {
-            output.write(ANSICode.blue)
+            output.write(ANSICode.brightBlue)
             output.write(ANSICode.underline)
             writeText(token.value)
             output.write(ANSICode.reset)

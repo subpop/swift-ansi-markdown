@@ -100,7 +100,6 @@ import Testing
 
         let result = formatter.getOutput() ?? ""
         #expect(result.contains(ANSICode.cyan))
-        #expect(result.contains(ANSICode.dim))
         #expect(result.contains(ANSICode.reset))
         #expect(result.contains("code"))
     }
@@ -146,7 +145,7 @@ import Testing
         formatter.format()
 
         let result = formatter.getOutput() ?? ""
-        #expect(result.contains(ANSICode.blue))
+        #expect(result.contains(ANSICode.brightBlue))
         #expect(result.contains(ANSICode.underline))
         #expect(result.contains("["))
     }
