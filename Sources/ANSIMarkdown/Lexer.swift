@@ -117,19 +117,25 @@ public class Lexer {
             return thematicBreakToken
         }
 
-        // Check for code blocks (```) - but only at line start
-        if remainingText.hasPrefix("```") && atLineStart {
-            atLineStart = false
-            inCodeBlock.toggle()
+        // Check for code blocks (```) - can be at line start or with leading whitespace
+        if remainingText.hasPrefix("```") {
+            // For opening code blocks, require line start (standard markdown)
+            // For closing code blocks, allow them anywhere on the line
+            let shouldRecognize = atLineStart || inCodeBlock
 
-            // If we're entering a code block, expect a language token next
-            if inCodeBlock {
-                expectingCodeBlockLanguage = true
+            if shouldRecognize {
+                atLineStart = false
+                inCodeBlock.toggle()
+
+                // If we're entering a code block, expect a language token next
+                if inCodeBlock {
+                    expectingCodeBlockLanguage = true
+                }
+
+                let token = Token(type: .codeBlock, value: "```", position: position)
+                advancePosition(by: 3)
+                return token
             }
-
-            let token = Token(type: .codeBlock, value: "```", position: position)
-            advancePosition(by: 3)
-            return token
         }
 
         // Check for strong emphasis (**)
@@ -211,6 +217,9 @@ public class Lexer {
                 linkParsingState = .none
                 atLineStart = true
                 return Token(type: .newline, value: String(char), position: tokenStart)
+            case " ", "\t":
+                // Handle whitespace inside code blocks properly
+                return Token(type: .whitespace, value: String(char), position: tokenStart)
             default:
                 return parseTextToken(startingWith: char, at: tokenStart)
             }

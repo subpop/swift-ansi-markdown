@@ -916,4 +916,79 @@ import Testing
         let eofToken = lexer.next()
         #expect(eofToken.type == .eof)
     }
+
+    @Test("Shell output with code fence - closing fence not at line start")
+    func testShellOutputWithCodeFence() {
+        let lexer = Lexer()
+        lexer.add("[user@host dir]$ command\n```bash\necho \"Hello\"\n```\nCompleted.")
+
+        // Skip to the opening code fence
+        var token = lexer.next()  // [user@host
+        while token.type != .codeBlock && token.type != .eof {
+            token = lexer.next()
+        }
+
+        // Should find the opening code fence
+        #expect(token.type == .codeBlock)
+        #expect(token.value == "```")
+
+        // Skip to the closing code fence
+        while token.type != .eof {
+            token = lexer.next()
+            if token.type == .codeBlock && token.value == "```" {
+                break  // Found the closing fence
+            }
+        }
+
+        // The closing fence should be properly recognized even if preceded by other content
+        #expect(token.type == .codeBlock)
+        #expect(token.value == "```")
+    }
+
+    @Test("Code fence closing not at line start should be recognized when in code block")
+    func testCodeFenceClosingNotAtLineStart() {
+        let lexer = Lexer()
+        lexer.add("```\ncode content\n  ```")  // Indented closing fence
+
+        // Opening fence
+        let token1 = lexer.next()
+        #expect(token1.type == .codeBlock)
+        #expect(token1.value == "```")
+
+        // Newline
+        let token2 = lexer.next()
+        #expect(token2.type == .newline)
+
+        // Code content
+        let token3 = lexer.next()
+        #expect(token3.type == .text)
+        #expect(token3.value == "code")
+
+        let token4 = lexer.next()
+        #expect(token4.type == .whitespace)
+
+        let token5 = lexer.next()
+        #expect(token5.type == .text)
+        #expect(token5.value == "content")
+
+        let token6 = lexer.next()
+        #expect(token6.type == .newline)
+
+        // Whitespace before closing fence
+        let token7 = lexer.next()
+        #expect(token7.type == .whitespace)
+        #expect(token7.value == " ")
+
+        let token8 = lexer.next()
+        #expect(token8.type == .whitespace)
+        #expect(token8.value == " ")
+
+        // Closing fence - should be recognized even with leading whitespace
+        let token9 = lexer.next()
+        #expect(token9.type == .codeBlock)
+        #expect(token9.value == "```")
+
+        let eofToken = lexer.next()
+        #expect(eofToken.type == .eof)
+    }
 }
