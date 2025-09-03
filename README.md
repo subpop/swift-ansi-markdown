@@ -4,7 +4,8 @@ A Swift library for streaming markdown formatted text with ANSI color codes.
 
 ## Features
 
-- 🎨 **Rich ANSI formatting** - Headers, emphasis, code blocks, quotes, links, and images
+- 🎨 **Rich ANSI formatting** - Headers, emphasis, code blocks, quotes, thematic
+  breaks, links, and images
 - 🚀 **Streaming support** - Process markdown incrementally as it arrives
 - 🔧 **Flexible output** - Write to stdout or capture formatted strings
 - 🧪 **Comprehensive testing** - Extensive unit test coverage
@@ -44,7 +45,7 @@ import ANSIMarkdown
 
 let formatter = ANSIMarkdownFormatter()
 // Add some markdown to be formatted.
-formatter.add("# Hello **World**!\n\nThis is *italic* and `code`.")
+formatter.add("# Hello **World**!\n\nThis is *italic* and `code`.\n\n---\n\nMore content below.")
 // Format and print.
 formatter.format()
 ```
@@ -54,6 +55,10 @@ Output:
 # Hello World!
 
 This is italic and code.
+
+──────────────────────────────────────────────────
+
+More content below.
 ```
 *(with beautiful ANSI colors and formatting)*
 
@@ -74,10 +79,12 @@ formatter.add("""
 
 This is **bold** and *italic* text.
 
-Here's some `inline code` and a block block:
+Here's some `inline code` and a block quote:
 
 > This is a block quote
 > with multiple lines.
+
+---
 
 Check out [this link](http://www.swift.org).
 """)
@@ -165,6 +172,7 @@ formatter.format()
 | **Inline Code** | `` `code` `` | Cyan + dim |
 | **Code Blocks** | ``` ```code``` ``` | Bright black + dim |
 | **Block Quotes** | `> quote` | Gray indicator (▎) + reset formatting |
+| **Thematic Breaks** | `---`, `***`, or `___` | Gray horizontal line (─) |
 | **Links** | `[text]` | Blue + underline |
 | **Images** | `![alt]` | Magenta |
 
@@ -178,6 +186,7 @@ formatter.format()
 - **H6+**: Bold + Bright Magenta
 - **Inline Code**: Cyan + Dim
 - **Code Blocks**: Bright Black + Dim
+- **Thematic Breaks**: Bright Black + Dim (horizontal line)
 - **Links**: Blue + Underline
 - **Images**: Magenta
 - **Block Quotes**: Gray indicator with preserved inner formatting
@@ -193,14 +202,14 @@ The lexer tokenizes markdown text into discrete tokens:
 ```swift
 public enum TokenType {
     case heading, emphasis, strongEmphasis, code, codeBlock
-    case blockQuote, link, image, text, whitespace, newline, eof
+    case blockQuote, thematicBreak, link, image, text, whitespace, newline, eof
 }
 ```
 
 **Key Features:**
 - **Streaming-friendly**: Processes text incrementally without requiring
   complete documents
-- **Smart tokenization**: Handles multi-character tokens (`**`, `````, `![`)
+- **Smart tokenization**: Handles multi-character tokens (`**`, `````, `![`, `---`)
   correctly
 - **Position tracking**: Maintains character positions for debugging
 - **Buffer management**: Efficiently manages processed vs. unprocessed content
@@ -263,8 +272,10 @@ private struct FormattingState {
 
 This enables:
 - **Nested formatting**: Bold text inside headers, code inside quotes
-- **Context-aware processing**: Block quotes only at line start
-- **Proper reset handling**: Restoring active formatting after code blocks
+- **Context-aware processing**: Block quotes and thematic breaks only at line
+  start
+- **Proper reset handling**: Restoring active formatting after code blocks and
+  thematic breaks
 
 #### ANSI Code Management
 

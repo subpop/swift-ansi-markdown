@@ -391,4 +391,91 @@ import Testing
         // If we get here without crashing, the test passes
         #expect(formatter.getOutput() == nil)  // StandardOutput returns nil for getOutput()
     }
+
+    @Test("Thematic break formatting")
+    func testThematicBreakFormatting() {
+        let output = StringOutput()
+        let formatter = ANSIMarkdownFormatter(output: output)
+
+        formatter.add("---")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result.contains(ANSICode.brightBlack))
+        #expect(result.contains(ANSICode.dim))
+        #expect(result.contains("─"))  // Unicode horizontal line character
+        #expect(result.contains(ANSICode.reset))
+    }
+
+    @Test("Thematic break with different characters")
+    func testThematicBreakWithDifferentCharacters() {
+        let output = StringOutput()
+        let formatter = ANSIMarkdownFormatter(output: output)
+
+        formatter.add("***\n___")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        // Should contain two thematic breaks (both rendered the same way)
+        let horizontalLineCount = result.components(separatedBy: "─").count - 1
+        #expect(horizontalLineCount >= 100)  // Two 50-character lines
+    }
+
+    @Test("Thematic break in context")
+    func testThematicBreakInContext() {
+        let output = StringOutput()
+        let formatter = ANSIMarkdownFormatter(output: output)
+
+        formatter.add("# Section 1\nContent here\n\n---\n\n# Section 2")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result.contains(ANSICode.brightRed))  // Heading
+        #expect(result.contains("Section 1"))
+        #expect(result.contains("Content here"))
+        #expect(result.contains("─"))  // Thematic break
+        #expect(result.contains("Section 2"))
+    }
+
+    @Test("Thematic break with leading spaces")
+    func testThematicBreakWithLeadingSpaces() {
+        let output = StringOutput()
+        let formatter = ANSIMarkdownFormatter(output: output)
+
+        formatter.add("  ---")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result.contains("─"))  // Should still render as thematic break
+        #expect(result.contains(ANSICode.brightBlack))
+    }
+
+    @Test("Thematic break ensures newlines")
+    func testThematicBreakEnsuresNewlines() {
+        let output = StringOutput()
+        let formatter = ANSIMarkdownFormatter(output: output)
+
+        formatter.add("text---")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        // Since "text---" is not a valid thematic break (not at line start),
+        // it should be treated as text
+        #expect(result.contains("text"))
+        #expect(!result.contains("─"))  // No thematic break line
+    }
+
+    @Test("Multiple thematic breaks")
+    func testMultipleThematicBreaks() {
+        let output = StringOutput()
+        let formatter = ANSIMarkdownFormatter(output: output)
+
+        formatter.add("---\n\n***\n\n___")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        // Should contain three thematic breaks
+        let horizontalLineCount = result.components(separatedBy: "─").count - 1
+        #expect(horizontalLineCount >= 150)  // Three 50-character lines
+    }
 }

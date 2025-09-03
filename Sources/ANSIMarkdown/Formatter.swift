@@ -157,6 +157,9 @@ public class ANSIMarkdownFormatter {
         case .image:
             handleImage(token)
 
+        case .thematicBreak:
+            handleThematicBreak(token)
+
         case .text:
             handleText(token)
 
@@ -272,6 +275,32 @@ public class ANSIMarkdownFormatter {
             output.write(ANSICode.magenta)
             writeText(token.value)
         }
+    }
+
+    private func handleThematicBreak(_ token: Token) {
+        // Ensure we're on a new line
+        if !state.atLineStart {
+            output.write("\n")
+        }
+
+        // Style the thematic break with dim bright black (gray) color
+        output.write(ANSICode.brightBlack)
+        output.write(ANSICode.dim)
+
+        // Create a visual thematic break using Unicode characters
+        // Use a line of em dashes or horizontal line characters
+        let breakLine = String(repeating: "─", count: 50)  // 50 character horizontal line
+        output.write(breakLine)
+
+        // Reset formatting
+        output.write(ANSICode.reset)
+
+        // Restore any active formatting
+        restoreActiveFormatting()
+
+        // Ensure we end on a new line
+        output.write("\n")
+        state.atLineStart = true
     }
 
     private func handleText(_ token: Token) {

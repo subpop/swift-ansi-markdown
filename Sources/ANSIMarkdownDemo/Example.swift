@@ -54,9 +54,18 @@ public class Example {
         formatter.format()
         print()
 
-        // Example 5: Mixed formatting
+        // Example 5: Thematic breaks
         formatter.reset()
-        print("5. Mixed Formatting:")
+        print("5. Thematic Breaks:")
+        formatter.add(
+            "First section\n\n---\n\nSecond section\n\n***\n\nThird section\n\n___\n\nFinal section\n"
+        )
+        formatter.format()
+        print()
+
+        // Example 6: Mixed formatting
+        formatter.reset()
+        print("6. Mixed Formatting:")
         formatter.add("# **Bold Heading**\n")
         formatter.add("> Quote with *emphasis* and `code`\n")
         formatter.add("Regular text with [links] and ![images].\n")

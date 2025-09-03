@@ -439,13 +439,34 @@ import Testing
         let lexer = Lexer()
         lexer.add("***")
 
+        // *** at line start should be parsed as a thematic break
         let token1 = lexer.next()
-        #expect(token1.type == .strongEmphasis)
-        #expect(token1.value == "**")
+        #expect(token1.type == .thematicBreak)
+        #expect(token1.value == "***")
+
+        let eofToken = lexer.next()
+        #expect(eofToken.type == .eof)
+    }
+
+    @Test("Emphasis not at line start")
+    func testEmphasisNotAtLineStart() {
+        let lexer = Lexer()
+        lexer.add("text ***")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "text")
 
         let token2 = lexer.next()
-        #expect(token2.type == .emphasis)
-        #expect(token2.value == "*")
+        #expect(token2.type == .whitespace)
+
+        let token3 = lexer.next()
+        #expect(token3.type == .strongEmphasis)
+        #expect(token3.value == "**")
+
+        let token4 = lexer.next()
+        #expect(token4.type == .emphasis)
+        #expect(token4.value == "*")
     }
 
     @Test("Edge cases - tabs and multiple spaces")
@@ -476,5 +497,149 @@ import Testing
         let token6 = lexer.next()
         #expect(token6.type == .text)
         #expect(token6.value == "c")
+    }
+
+    @Test("Thematic break with hyphens")
+    func testThematicBreakWithHyphens() {
+        let lexer = Lexer()
+        lexer.add("---")
+
+        let token = lexer.next()
+        #expect(token.type == .thematicBreak)
+        #expect(token.value == "---")
+        #expect(token.position == 0)
+    }
+
+    @Test("Thematic break with asterisks")
+    func testThematicBreakWithAsterisks() {
+        let lexer = Lexer()
+        lexer.add("***")
+
+        let token = lexer.next()
+        #expect(token.type == .thematicBreak)
+        #expect(token.value == "***")
+    }
+
+    @Test("Thematic break with underscores")
+    func testThematicBreakWithUnderscores() {
+        let lexer = Lexer()
+        lexer.add("___")
+
+        let token = lexer.next()
+        #expect(token.type == .thematicBreak)
+        #expect(token.value == "___")
+    }
+
+    @Test("Thematic break with more than 3 characters")
+    func testThematicBreakWithMoreCharacters() {
+        let lexer = Lexer()
+        lexer.add("-----")
+
+        let token = lexer.next()
+        #expect(token.type == .thematicBreak)
+        #expect(token.value == "-----")
+    }
+
+    @Test("Thematic break with leading spaces")
+    func testThematicBreakWithLeadingSpaces() {
+        let lexer = Lexer()
+        lexer.add("  ---")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .thematicBreak)
+        #expect(token1.value == "---")
+    }
+
+    @Test("Thematic break with trailing spaces")
+    func testThematicBreakWithTrailingSpaces() {
+        let lexer = Lexer()
+        lexer.add("---  \n")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .thematicBreak)
+        #expect(token1.value == "---")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .whitespace)
+        #expect(token2.value == " ")
+    }
+
+    @Test("Not a thematic break - only 2 characters")
+    func testNotThematicBreakTwoCharacters() {
+        let lexer = Lexer()
+        lexer.add("--")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "--")
+    }
+
+    @Test("Not a thematic break - mixed characters")
+    func testNotThematicBreakMixedCharacters() {
+        let lexer = Lexer()
+        lexer.add("-*-")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "-")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .emphasis)
+        #expect(token2.value == "*")
+
+        let token3 = lexer.next()
+        #expect(token3.type == .text)
+        #expect(token3.value == "-")
+    }
+
+    @Test("Not a thematic break - not at line start")
+    func testNotThematicBreakNotAtLineStart() {
+        let lexer = Lexer()
+        lexer.add("text ---")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "text")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .whitespace)
+
+        let token3 = lexer.next()
+        #expect(token3.type == .text)
+        #expect(token3.value == "---")
+    }
+
+    @Test("Thematic break after newline")
+    func testThematicBreakAfterNewline() {
+        let lexer = Lexer()
+        lexer.add("text\n---")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "text")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .newline)
+
+        let token3 = lexer.next()
+        #expect(token3.type == .thematicBreak)
+        #expect(token3.value == "---")
+    }
+
+    @Test("Thematic break with content after newline")
+    func testThematicBreakWithContentAfterNewline() {
+        let lexer = Lexer()
+        lexer.add("---\nmore content")
+
+        let token1 = lexer.next()
+        #expect(token1.type == .thematicBreak)
+        #expect(token1.value == "---")
+
+        let token2 = lexer.next()
+        #expect(token2.type == .newline)
+
+        let token3 = lexer.next()
+        #expect(token3.type == .text)
+        #expect(token3.value == "more")
     }
 }
