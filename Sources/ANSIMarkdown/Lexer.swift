@@ -47,6 +47,7 @@ public class Lexer {
     private var position: Int = 0
     private var currentIndex: String.Index
     private var atLineStart: Bool = true
+    private var inCodeBlock: Bool = false
 
     public init() {
         self.currentIndex = buffer.startIndex
@@ -92,6 +93,7 @@ public class Lexer {
         // Check for code blocks (```) - but only at line start
         if remainingText.hasPrefix("```") && atLineStart {
             atLineStart = false
+            inCodeBlock.toggle()
             let token = Token(type: .codeBlock, value: "```", position: position)
             advancePosition(by: 3)
             return token
@@ -164,6 +166,15 @@ public class Lexer {
     }
 
     private func parseSingleCharToken(char: Character, at tokenStart: Int) -> Token {
+        if inCodeBlock {
+            switch char {
+            case "\n":
+                atLineStart = true
+                return Token(type: .newline, value: String(char), position: tokenStart)
+            default:
+                return parseTextToken(startingWith: char, at: tokenStart)
+            }
+        }
         switch char {
         case ">":
             atLineStart = false
