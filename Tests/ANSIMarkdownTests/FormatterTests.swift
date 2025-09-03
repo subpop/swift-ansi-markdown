@@ -411,7 +411,6 @@ import Testing
 
         let result = formatter.getOutput() ?? ""
         #expect(result.contains(ANSICode.brightBlack))
-        #expect(result.contains(ANSICode.dim))
         #expect(result.contains("─"))  // Unicode horizontal line character
         #expect(result.contains(ANSICode.reset))
     }

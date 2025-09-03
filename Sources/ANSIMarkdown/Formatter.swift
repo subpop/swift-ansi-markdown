@@ -315,13 +315,12 @@ public class ANSIMarkdownFormatter {
             output.write("\n")
         }
 
-        // Style the thematic break with dim bright black (gray) color
+        // Style the thematic break with bright black (gray) color
         output.write(ANSICode.brightBlack)
-        output.write(ANSICode.dim)
 
         // Create a visual thematic break using Unicode characters
         // Use a line of em dashes or horizontal line characters
-        let breakLine = String(repeating: "─", count: 50)  // 50 character horizontal line
+        let breakLine = String(repeating: "─", count: 60)  // 60 character horizontal line
         output.write(breakLine)
 
         // Reset formatting
