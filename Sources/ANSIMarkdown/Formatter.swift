@@ -570,6 +570,7 @@ public class ANSIMarkdownFormatter {
 
     /// Reset the formatter state and clear the lexer buffer
     public func reset() {
+        output.write(ANSICode.reset)
         state.reset()
         lexer.clearBuffer()
         // Clear the output buffer if it's a StringOutput
