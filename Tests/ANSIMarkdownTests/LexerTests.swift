@@ -991,4 +991,120 @@ import Testing
         let eofToken = lexer.next()
         #expect(eofToken.type == .eof)
     }
+
+    @Test("Chunked code fence closing - two backticks then backtick with newline")
+    func testChunkedCodeFenceClosing() {
+        let lexer = Lexer()
+
+        // Start with opening code fence and some content
+        lexer.add("```swift\nlet x = 1\n")
+
+        // Opening fence
+        let token1 = lexer.next()
+        #expect(token1.type == .codeBlock)
+        #expect(token1.value == "```")
+
+        // Language
+        let token2 = lexer.next()
+        #expect(token2.type == .codeBlockLanguage)
+        #expect(token2.value == "swift")
+
+        // Newline
+        let token3 = lexer.next()
+        #expect(token3.type == .newline)
+
+        // Code content
+        let token4 = lexer.next()
+        #expect(token4.type == .text)
+        #expect(token4.value == "let")
+
+        let token5 = lexer.next()
+        #expect(token5.type == .whitespace)
+
+        let token6 = lexer.next()
+        #expect(token6.type == .text)
+        #expect(token6.value == "x")
+
+        let token7 = lexer.next()
+        #expect(token7.type == .whitespace)
+
+        let token8 = lexer.next()
+        #expect(token8.type == .text)
+        #expect(token8.value == "=")
+
+        let token9 = lexer.next()
+        #expect(token9.type == .whitespace)
+
+        let token10 = lexer.next()
+        #expect(token10.type == .text)
+        #expect(token10.value == "1")
+
+        let token11 = lexer.next()
+        #expect(token11.type == .newline)
+
+        // Now add the chunked closing fence - first two backticks
+        lexer.add("``")
+
+        // Should get individual backticks as text since ``` is not complete yet
+        let token12 = lexer.next()
+        #expect(token12.type == .text)
+        #expect(token12.value == "")
+
+        let token13 = lexer.next()
+        #expect(token13.type == .text)
+        #expect(token13.value == "")
+
+        // Now add the final backtick and newline
+        lexer.add("`\n")
+
+        // This should now recognize as a code block closing
+        let token14 = lexer.next()
+        #expect(token14.type == .codeBlock)
+        #expect(token14.value == "```")
+
+        let token15 = lexer.next()
+        #expect(token15.type == .newline)
+
+        let eofToken = lexer.next()
+        #expect(eofToken.type == .eof)
+    }
+
+    @Test("Chunked code fence closing - single backticks added one by one")
+    func testChunkedCodeFenceClosingOneByOne() {
+        let lexer = Lexer()
+
+        // Start with opening code fence and some content
+        lexer.add("```python\nprint('hello')\n")
+
+        // Consume all tokens up to the end
+        var tokens: [Token] = []
+        var token = lexer.next()
+        while token.type != .eof {
+            tokens.append(token)
+            token = lexer.next()
+        }
+
+        // Verify we're in a code block state by checking the tokens
+        let codeBlockTokens = tokens.filter { $0.type == .codeBlock }
+        #expect(codeBlockTokens.count == 1)  // Only opening code block so far
+
+        // Now add backticks one by one
+        lexer.add("`")
+        let token1 = lexer.next()
+        #expect(token1.type == .text)
+        #expect(token1.value == "")
+
+        lexer.add("`")
+        let token2 = lexer.next()
+        #expect(token2.type == .text)
+        #expect(token2.value == "")
+
+        lexer.add("`")
+        let token3 = lexer.next()
+        #expect(token3.type == .codeBlock)
+        #expect(token3.value == "```")
+
+        let eofToken = lexer.next()
+        #expect(eofToken.type == .eof)
+    }
 }

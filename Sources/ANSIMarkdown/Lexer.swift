@@ -61,6 +61,7 @@ public class Lexer {
     private var inCodeBlock: Bool = false
     private var expectingCodeBlockLanguage: Bool = false
     private var linkParsingState: LinkParsingState = .none
+    private var backtickCount: Int = 0  // Track consecutive backticks when inside code block
 
     private enum LinkParsingState {
         case none
@@ -209,6 +210,8 @@ public class Lexer {
         if inCodeBlock {
             switch char {
             case "\n":
+                // Reset backtick count on newline (code fences must be on same line)
+                backtickCount = 0
                 // If we were expecting a language but hit a newline, there's no language
                 if expectingCodeBlockLanguage {
                     expectingCodeBlockLanguage = false
@@ -218,9 +221,24 @@ public class Lexer {
                 atLineStart = true
                 return Token(type: .newline, value: String(char), position: tokenStart)
             case " ", "\t":
-                // Handle whitespace inside code blocks properly
+                // Reset backtick count when we encounter whitespace
+                backtickCount = 0
                 return Token(type: .whitespace, value: String(char), position: tokenStart)
+            case "`":
+                // Handle backticks specially when inside code block
+                backtickCount += 1
+                if backtickCount == 3 {
+                    // We have a complete closing code fence
+                    backtickCount = 0
+                    inCodeBlock = false
+                    return Token(type: .codeBlock, value: "```", position: tokenStart)
+                } else {
+                    // Still accumulating backticks. Emit an empty token.
+                    return Token(type: .text, value: "", position: tokenStart)
+                }
             default:
+                // Reset backtick count when we encounter non-backtick, non-whitespace characters
+                backtickCount = 0
                 return parseTextToken(startingWith: char, at: tokenStart)
             }
         }
@@ -423,6 +441,7 @@ public class Lexer {
         inCodeBlock = false
         expectingCodeBlockLanguage = false
         linkParsingState = .none
+        backtickCount = 0
     }
 
     public func getBuffer() -> String {
@@ -448,5 +467,6 @@ public class Lexer {
         inCodeBlock = false
         expectingCodeBlockLanguage = false
         linkParsingState = .none
+        backtickCount = 0
     }
 }
