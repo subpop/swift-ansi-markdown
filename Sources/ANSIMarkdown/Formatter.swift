@@ -395,3 +395,63 @@ public class ANSIMarkdownFormatter {
         lexer.clearProcessed()
     }
 }
+
+/// Raw markdown formatter that outputs unformatted markdown text
+/// This is essentially a no-op formatter that passes through the original markdown
+public class RawMarkdownFormatter {
+    private let lexer = Lexer()
+    private var output: any TextOutputStream
+
+    public init(output: any TextOutputStream = StandardOutput()) {
+        self.output = output
+    }
+
+    /// Add markdown text to be formatted
+    public func add(_ text: String) {
+        lexer.add(text)
+    }
+
+    /// Process all available tokens and write raw output
+    public func format() {
+        while lexer.hasMoreTokens() {
+            let token = lexer.next()
+            if token.type == .eof {
+                break
+            }
+            processToken(token)
+        }
+    }
+
+    /// Process a single token and output its raw value
+    private func processToken(_ token: Token) {
+        // Simply output the raw token value without any formatting
+        output.write(token.value)
+    }
+
+    /// Reset the formatter state and clear the lexer buffer
+    public func reset() {
+        lexer.clearBuffer()
+        // Clear the output buffer if it's a StringOutput
+        if output as? StringOutput != nil {
+            output = StringOutput()
+        }
+    }
+
+    /// Get the current output content (only works with StringOutput)
+    public func getOutput() -> String? {
+        if let stringOutput = output as? StringOutput {
+            return stringOutput.content
+        }
+        return nil
+    }
+
+    /// Update the output stream (useful for reset functionality)
+    public func setOutput(_ newOutput: any TextOutputStream) {
+        output = newOutput
+    }
+
+    /// Clear processed content from the lexer buffer
+    public func clearProcessed() {
+        lexer.clearProcessed()
+    }
+}

@@ -162,6 +162,30 @@ formatter.add("# Document 2")
 formatter.format()
 ```
 
+### Raw Markdown Formatter
+
+For scenarios where you need the original markdown text without ANSI formatting,
+use the `RawMarkdownFormatter`:
+
+```swift
+let rawFormatter = RawMarkdownFormatter()
+
+rawFormatter.add("# Title\nThis is **bold** and *italic* text with `code`.")
+rawFormatter.format()
+
+// Outputs: # Title
+//          This is **bold** and *italic* text with `code`.
+```
+
+This is useful for:
+- **Documentation generation** - Pass-through markdown to other processors
+- **Text processing pipelines** - Validate or transform markdown syntax
+- **Plain text output** - When ANSI codes aren't supported or desired
+- **Testing and debugging** - Compare raw input with formatted output
+
+The `RawMarkdownFormatter` has the same API as `ANSIMarkdownFormatter` but
+outputs the original markdown text unchanged.
+
 ## Supported Markdown Elements
 
 | Element | Syntax | ANSI Formatting |

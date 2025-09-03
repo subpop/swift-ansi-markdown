@@ -33,6 +33,15 @@ print("Captured content length: \(capturedOutput.count) characters")
 print("Preview: \(String(capturedOutput.prefix(100)))...")
 print()
 
+// Raw formatter demo
+Example.demonstrateRawFormatter()
+
+print("=== Formatter Comparison ===")
+let comparison = Example.compareFormatters()
+print("Raw output: \(comparison.raw)")
+print("ANSI output: \(comparison.ansi)")
+print()
+
 // Interactive example
 print("=== Interactive Example ===")
 print("Enter some markdown text (or press Enter to use default):")

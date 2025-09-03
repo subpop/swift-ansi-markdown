@@ -479,3 +479,290 @@ import Testing
         #expect(horizontalLineCount >= 150)  // Three 50-character lines
     }
 }
+
+@Suite("Raw Formatter Tests") struct RawFormatterTests {
+
+    @Test("Basic text pass-through")
+    func testBasicTextPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("Hello world")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "Hello world")
+    }
+
+    @Test("Heading pass-through")
+    func testHeadingPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("# Main Title")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "# Main Title")
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.bold))
+        #expect(!result.contains(ANSICode.brightRed))
+    }
+
+    @Test("Multiple heading levels pass-through")
+    func testMultipleHeadingLevelsPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        let markdown = """
+            # H1 Title
+            ## H2 Title
+            ### H3 Title
+            """
+
+        formatter.add(markdown)
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == markdown)
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.bold))
+        #expect(!result.contains(ANSICode.brightRed))
+        #expect(!result.contains(ANSICode.brightYellow))
+    }
+
+    @Test("Emphasis pass-through")
+    func testEmphasisPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("This is *emphasized* text")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "This is *emphasized* text")
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.italic))
+    }
+
+    @Test("Strong emphasis pass-through")
+    func testStrongEmphasisPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("This is **bold** text")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "This is **bold** text")
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.bold))
+    }
+
+    @Test("Code pass-through")
+    func testCodePassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("Here is `inline code`")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "Here is `inline code`")
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.cyan))
+        #expect(!result.contains(ANSICode.dim))
+    }
+
+    @Test("Code block pass-through")
+    func testCodeBlockPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        let markdown = """
+            ```
+            function test() {
+                return true;
+            }
+            ```
+            """
+
+        formatter.add(markdown)
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == markdown)
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.brightBlack))
+        #expect(!result.contains(ANSICode.dim))
+    }
+
+    @Test("Block quote pass-through")
+    func testBlockQuotePassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("> This is a quote")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "> This is a quote")
+        // Should not contain any ANSI codes or special quote indicators
+        #expect(!result.contains(ANSICode.brightBlack))
+        #expect(!result.contains("▎"))
+    }
+
+    @Test("Link pass-through")
+    func testLinkPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("[Link text](https://example.com)")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "[Link text](https://example.com)")
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.blue))
+        #expect(!result.contains(ANSICode.underline))
+    }
+
+    @Test("Image pass-through")
+    func testImagePassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("![Alt text](image.png)")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "![Alt text](image.png)")
+        // Should not contain any ANSI codes
+        #expect(!result.contains(ANSICode.magenta))
+    }
+
+    @Test("Thematic break pass-through")
+    func testThematicBreakPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("---")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "---")
+        // Should not contain any ANSI codes or fancy line characters
+        #expect(!result.contains(ANSICode.brightBlack))
+        #expect(!result.contains("─"))
+    }
+
+    @Test("Complex markdown pass-through")
+    func testComplexMarkdownPassThrough() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        let markdown = """
+            # Main Title
+
+            This is a paragraph with *emphasis* and **strong** text.
+
+            ## Code Example
+
+            Here's some `inline code` and a block:
+
+            ```swift
+            func hello() {
+                print("Hello, world!")
+            }
+            ```
+
+            > This is a quote
+            > with multiple lines
+
+            [Link to example](https://example.com)
+
+            ![Image](image.png)
+
+            ---
+
+            Final paragraph.
+            """
+
+        formatter.add(markdown)
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == markdown)
+
+        // Verify no ANSI codes are present
+        let ansiCodes = [
+            ANSICode.bold, ANSICode.italic, ANSICode.underline,
+            ANSICode.red, ANSICode.green, ANSICode.blue, ANSICode.cyan, ANSICode.magenta,
+            ANSICode.brightRed, ANSICode.brightGreen, ANSICode.brightBlue,
+            ANSICode.brightCyan, ANSICode.brightMagenta, ANSICode.brightYellow,
+            ANSICode.brightBlack, ANSICode.dim, ANSICode.reset,
+        ]
+
+        for code in ansiCodes {
+            #expect(!result.contains(code), "Result should not contain ANSI code: \(code)")
+        }
+    }
+
+    @Test("Reset functionality")
+    func testResetFunctionality() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("First text")
+        formatter.format()
+
+        let firstResult = formatter.getOutput() ?? ""
+        #expect(firstResult == "First text")
+
+        formatter.reset()
+        formatter.add("Second text")
+        formatter.format()
+
+        let secondResult = formatter.getOutput() ?? ""
+        #expect(secondResult == "Second text")
+    }
+
+    @Test("Multiple format calls")
+    func testMultipleFormatCalls() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("First ")
+        formatter.format()
+        formatter.add("Second")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "First Second")
+    }
+
+    @Test("Empty input")
+    func testEmptyInput() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        formatter.add("")
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == "")
+    }
+
+    @Test("Whitespace preservation")
+    func testWhitespacePreservation() {
+        let output = StringOutput()
+        let formatter = RawMarkdownFormatter(output: output)
+
+        let markdown = "  Indented text  \n\n  More text  "
+        formatter.add(markdown)
+        formatter.format()
+
+        let result = formatter.getOutput() ?? ""
+        #expect(result == markdown)
+    }
+}

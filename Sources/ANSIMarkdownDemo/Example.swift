@@ -119,6 +119,78 @@ public class Example {
 
         return formatter.getOutput() ?? ""
     }
+
+    /// Demonstrate the raw formatter that outputs unformatted markdown
+    public static func demonstrateRawFormatter() {
+        let rawFormatter = RawMarkdownFormatter()
+        let ansiFormatter = ANSIMarkdownFormatter()
+
+        print("=== Raw Formatter Demo ===\n")
+
+        let sampleMarkdown = """
+            # Raw Markdown Example
+
+            This is a demonstration of the **raw formatter** vs the *ANSI formatter*.
+
+            ## Features
+
+            The raw formatter:
+            - Preserves original markdown syntax
+            - No ANSI color codes
+            - Perfect for `plain text` output
+
+            > This is a block quote that remains unformatted
+
+            ```swift
+            func example() {
+                print("Code blocks stay as markdown")
+            }
+            ```
+
+            [Links](https://example.com) and ![images](image.png) are preserved.
+
+            ---
+
+            This is useful for:
+            1. **Documentation generation**
+            2. *Text processing pipelines*
+            3. `Markdown validation`
+            """
+
+        print("ANSI Formatted Output:")
+        print("─────────────────────")
+        ansiFormatter.add(sampleMarkdown)
+        ansiFormatter.format()
+        print()
+
+        print("\nRaw Markdown Output:")
+        print("────────────────────")
+        rawFormatter.add(sampleMarkdown)
+        rawFormatter.format()
+        print()
+    }
+
+    /// Compare raw and ANSI formatters side by side
+    public static func compareFormatters() -> (raw: String, ansi: String) {
+        let rawOutput = StringOutput()
+        let ansiOutput = StringOutput()
+
+        let rawFormatter = RawMarkdownFormatter(output: rawOutput)
+        let ansiFormatter = ANSIMarkdownFormatter(output: ansiOutput)
+
+        let markdown = "# Title\nThis is **bold** and *italic* text with `code`."
+
+        rawFormatter.add(markdown)
+        rawFormatter.format()
+
+        ansiFormatter.add(markdown)
+        ansiFormatter.format()
+
+        return (
+            raw: rawFormatter.getOutput() ?? "",
+            ansi: ansiFormatter.getOutput() ?? ""
+        )
+    }
 }
 
 // Uncomment the lines below to run the examples when this file is executed directly
