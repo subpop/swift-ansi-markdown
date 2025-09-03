@@ -190,7 +190,7 @@ outputs the original markdown text unchanged.
 
 | Element | Syntax | ANSI Formatting |
 |---------|--------|-----------------|
-| **Headers** | `# H1`, `## H2`, etc. | Bold + bright colors (red, yellow, green, cyan, blue, magenta) |
+| **Headers** | `# H1`, `## H2`, etc. | Green |
 | **Bold** | `**text**` | Bold |
 | **Italic** | `*text*` | Italic |
 | **Inline Code** | `` `code` `` | Cyan + dim |
@@ -202,12 +202,7 @@ outputs the original markdown text unchanged.
 
 ### Color Scheme
 
-- **H1**: Bold + Bright Red
-- **H2**: Bold + Bright Yellow  
-- **H3**: Bold + Bright Green
-- **H4**: Bold + Bright Cyan
-- **H5**: Bold + Bright Blue
-- **H6+**: Bold + Bright Magenta
+- **Headings**: Green
 - **Inline Code**: Cyan + Dim
 - **Code Blocks**: Bright Black + Dim
 - **Thematic Breaks**: Bright Black + Dim (horizontal line)

@@ -41,10 +41,9 @@ import Testing
         formatter.format()
 
         let result = formatter.getOutput() ?? ""
-        // Should contain bold and bright red formatting
-        #expect(result.contains(ANSICode.bold))
-        #expect(result.contains(ANSICode.brightRed))
-        #expect(result.contains("Main Title"))
+        // Should contain green formatting and level markers
+        #expect(result.contains(ANSICode.green))
+        #expect(result.contains("# Main Title"))
     }
 
     @Test("Multiple heading levels")
@@ -56,10 +55,11 @@ import Testing
         formatter.format()
 
         let result = formatter.getOutput() ?? ""
-        // Should contain different colors for different levels
-        #expect(result.contains(ANSICode.brightRed))  // Level 1
-        #expect(result.contains(ANSICode.brightYellow))  // Level 2
-        #expect(result.contains(ANSICode.brightGreen))  // Level 3
+        // Should contain green formatting for all levels and level markers
+        #expect(result.contains(ANSICode.green))
+        #expect(result.contains("# Level 1"))
+        #expect(result.contains("## Level 2"))
+        #expect(result.contains("### Level 3"))
     }
 
     @Test("Emphasis formatting")
@@ -170,7 +170,7 @@ import Testing
 
         let result = formatter.getOutput() ?? ""
         // Should contain heading formatting
-        #expect(result.contains(ANSICode.brightRed))
+        #expect(result.contains(ANSICode.green))
         // Should contain bold formatting
         #expect(result.contains(ANSICode.bold))
         // Should contain block quote indicator
@@ -430,7 +430,7 @@ import Testing
         formatter.format()
 
         let result = formatter.getOutput() ?? ""
-        #expect(result.contains(ANSICode.brightRed))  // Heading
+        #expect(result.contains(ANSICode.green))  // Heading
         #expect(result.contains("Section 1"))
         #expect(result.contains("Content here"))
         #expect(result.contains("─"))  // Thematic break

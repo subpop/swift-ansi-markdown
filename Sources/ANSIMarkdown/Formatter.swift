@@ -179,7 +179,12 @@ public class ANSIMarkdownFormatter {
     private func handleHeading(_ token: Token) {
         if state.atLineStart {
             state.headingLevel += 1
-            // Don't output the # character itself, we'll handle it when we see text
+            // Apply heading formatting on the first # character
+            if state.headingLevel == 1 {
+                applyHeadingFormatting()
+                state.inHeading = true
+            }
+            writeText(token.value)
         } else {
             // If not at line start, treat as regular text
             writeText(token.value)
@@ -310,13 +315,6 @@ public class ANSIMarkdownFormatter {
     }
 
     private func handleText(_ token: Token) {
-        // Apply heading formatting if we're in a heading
-        if state.headingLevel > 0 && state.atLineStart {
-            applyHeadingFormatting(level: state.headingLevel)
-            state.inHeading = true
-            state.headingLevel = 0  // Reset after applying
-        }
-
         writeText(token.value)
         state.atLineStart = false
     }
@@ -345,27 +343,9 @@ public class ANSIMarkdownFormatter {
         state.headingLevel = 0
     }
 
-    private func applyHeadingFormatting(level: Int) {
-        switch level {
-        case 1:
-            output.write(ANSICode.bold)
-            output.write(ANSICode.brightRed)
-        case 2:
-            output.write(ANSICode.bold)
-            output.write(ANSICode.brightYellow)
-        case 3:
-            output.write(ANSICode.bold)
-            output.write(ANSICode.brightGreen)
-        case 4:
-            output.write(ANSICode.bold)
-            output.write(ANSICode.brightCyan)
-        case 5:
-            output.write(ANSICode.bold)
-            output.write(ANSICode.brightBlue)
-        default:
-            output.write(ANSICode.bold)
-            output.write(ANSICode.brightMagenta)
-        }
+    private func applyHeadingFormatting() {
+        // All headings use green color only, no bold or italics
+        output.write(ANSICode.green)
     }
 
     private func restoreActiveFormatting() {
