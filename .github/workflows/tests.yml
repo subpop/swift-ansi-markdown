@@ -40,7 +40,7 @@ jobs:
         brew install llvm lcov
         swift test --parallel --enable-code-coverage
         mkdir -p .build/debug/codecov
-        llvm-cov export -format=lcov .build/debug/ANSIMarkdownTests.xctest/Contents/MacOS/ANSIMarkdownTests -instr-profile .build/debug/codecov/default.profdata > .build/debug/codecov/lcov_raw.info
+        llvm-cov export -format=lcov .build/debug/ANSIMarkdownPackageTests.xctest/Contents/MacOS/ANSIMarkdownPackageTests -instr-profile .build/debug/codecov/default.profdata > .build/debug/codecov/lcov_raw.info
         # Filter out checkouts and other unwanted paths
         lcov --remove .build/debug/codecov/lcov_raw.info '*/.build/*' '*/Tests/*' --output-file .build/debug/codecov/lcov.info
         
