@@ -180,7 +180,7 @@ import Testing
         #expect(token1.value == "```")
 
         let token2 = lexer.next()
-        #expect(token2.type == .text)
+        #expect(token2.type == .codeBlockLanguage)
         #expect(token2.value == "swift")
 
         let token3 = lexer.next()

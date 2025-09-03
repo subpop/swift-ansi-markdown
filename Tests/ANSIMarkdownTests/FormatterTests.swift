@@ -114,9 +114,13 @@ import Testing
         formatter.format()
 
         let result = formatter.getOutput() ?? ""
-        #expect(result.contains(ANSICode.brightBlack))
-        #expect(result.contains(ANSICode.dim))
-        #expect(result.contains("swift"))
+        // Check for bright red emdash sequences
+        #expect(result.contains(ANSICode.brightRed))
+        #expect(result.contains("—"))  // Emdash character
+        // Check for language embedded in opening sequence
+        #expect(result.contains("——swift"))  // Two emdashes followed by language
+        // Check for cyan code content
+        #expect(result.contains(ANSICode.cyan))
         #expect(result.contains("let x = 5"))
     }
 
@@ -293,8 +297,13 @@ import Testing
         formatter.format()
 
         let result = formatter.getOutput() ?? ""
-        #expect(result.contains(ANSICode.brightBlack))
-        #expect(result.contains("swift"))
+        // Check for bright red emdash sequences
+        #expect(result.contains(ANSICode.brightRed))
+        #expect(result.contains("—"))  // Emdash character
+        // Check for language embedded in opening sequence
+        #expect(result.contains("——swift"))  // Two emdashes followed by language
+        // Check for cyan code content
+        #expect(result.contains(ANSICode.cyan))
         #expect(result.contains("let x = 5"))
     }
 

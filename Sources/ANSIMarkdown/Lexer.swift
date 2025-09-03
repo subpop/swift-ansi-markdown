@@ -33,6 +33,7 @@ public enum TokenType: String, CaseIterable {
     case strongEmphasis = "**"
     case code = "`"
     case codeBlock = "```"
+    case codeBlockLanguage = "```lang"
     case thematicBreak = "---"
     case link = "["
     case image = "!["
@@ -48,6 +49,7 @@ public class Lexer {
     private var currentIndex: String.Index
     private var atLineStart: Bool = true
     private var inCodeBlock: Bool = false
+    private var expectingCodeBlockLanguage: Bool = false
 
     public init() {
         self.currentIndex = buffer.startIndex
@@ -94,6 +96,12 @@ public class Lexer {
         if remainingText.hasPrefix("```") && atLineStart {
             atLineStart = false
             inCodeBlock.toggle()
+
+            // If we're entering a code block, expect a language token next
+            if inCodeBlock {
+                expectingCodeBlockLanguage = true
+            }
+
             let token = Token(type: .codeBlock, value: "```", position: position)
             advancePosition(by: 3)
             return token
@@ -169,6 +177,10 @@ public class Lexer {
         if inCodeBlock {
             switch char {
             case "\n":
+                // If we were expecting a language but hit a newline, there's no language
+                if expectingCodeBlockLanguage {
+                    expectingCodeBlockLanguage = false
+                }
                 atLineStart = true
                 return Token(type: .newline, value: String(char), position: tokenStart)
             default:
@@ -192,9 +204,14 @@ public class Lexer {
             atLineStart = false
             return Token(type: .link, value: String(char), position: tokenStart)
         case "\n":
+            // If we were expecting a language but hit a newline, there's no language
+            if expectingCodeBlockLanguage {
+                expectingCodeBlockLanguage = false
+            }
             atLineStart = true
             return Token(type: .newline, value: String(char), position: tokenStart)
         case " ", "\t":
+            // If we're expecting a language and hit whitespace, skip it (don't reset expectation yet)
             // Only stay at line start if we're already there and this is whitespace
             return Token(type: .whitespace, value: String(char), position: tokenStart)
         default:
@@ -226,6 +243,12 @@ public class Lexer {
             currentIndex = buffer.index(before: currentIndex)
         }
 
+        // If we're expecting a code block language, emit it as a language token
+        if expectingCodeBlockLanguage {
+            expectingCodeBlockLanguage = false
+            return Token(type: .codeBlockLanguage, value: textValue, position: tokenStart)
+        }
+
         return Token(type: .text, value: textValue, position: tokenStart)
     }
 
@@ -250,6 +273,8 @@ public class Lexer {
         position = 0
         currentIndex = buffer.startIndex
         atLineStart = true
+        inCodeBlock = false
+        expectingCodeBlockLanguage = false
     }
 
     public func getBuffer() -> String {
@@ -272,5 +297,7 @@ public class Lexer {
         position = 0
         currentIndex = buffer.startIndex
         atLineStart = true
+        inCodeBlock = false
+        expectingCodeBlockLanguage = false
     }
 }

@@ -93,6 +93,8 @@ private struct FormattingState {
     var headingLevel = 0
     var inHeading = false
     var atLineStart = true
+    var pendingCodeBlockOpen = false
+    var codeBlockLanguage = ""
 
     mutating func reset() {
         inEmphasis = false
@@ -103,6 +105,8 @@ private struct FormattingState {
         headingLevel = 0
         inHeading = false
         atLineStart = true
+        pendingCodeBlockOpen = false
+        codeBlockLanguage = ""
     }
 }
 
@@ -149,6 +153,9 @@ public class ANSIMarkdownFormatter {
 
         case .codeBlock:
             handleCodeBlock(token)
+
+        case .codeBlockLanguage:
+            handleCodeBlockLanguage(token)
 
         case .blockQuote:
             handleBlockQuote(token)
@@ -239,18 +246,32 @@ public class ANSIMarkdownFormatter {
     private func handleCodeBlock(_ token: Token) {
         state.inCodeBlock.toggle()
         if state.inCodeBlock {
+            // Opening fence - mark as pending and wait for potential language token
             if !state.atLineStart {
                 output.write("\n")
             }
-            output.write(ANSICode.brightBlack)
-            output.write(ANSICode.dim)
+            state.pendingCodeBlockOpen = true
+            state.codeBlockLanguage = ""
         } else {
+            // Closing fence - replace with emdash sequence
+            output.write(ANSICode.reset)
+            output.write(ANSICode.brightRed)
+            output.write(String(repeating: "—", count: 50))
             output.write(ANSICode.reset)
             output.write("\n")
             // Restore any active formatting
             restoreActiveFormatting()
         }
         state.atLineStart = !state.inCodeBlock
+    }
+
+    private func handleCodeBlockLanguage(_ token: Token) {
+        // Store the language and output the opening fence
+        state.codeBlockLanguage = token.value
+        if state.pendingCodeBlockOpen {
+            outputCodeBlockOpeningFence(language: state.codeBlockLanguage)
+            state.pendingCodeBlockOpen = false
+        }
     }
 
     private func handleBlockQuote(_ token: Token) {
@@ -324,6 +345,12 @@ public class ANSIMarkdownFormatter {
     }
 
     private func handleNewline(_ token: Token) {
+        // If there's a pending code block open (no language was provided), output it now
+        if state.pendingCodeBlockOpen {
+            outputCodeBlockOpeningFence(language: "")
+            state.pendingCodeBlockOpen = false
+        }
+
         // Reset line-specific states
         if state.inBlockQuote {
             output.write(ANSICode.reset)
@@ -346,6 +373,27 @@ public class ANSIMarkdownFormatter {
     private func applyHeadingFormatting() {
         // All headings use green color only, no bold or italics
         output.write(ANSICode.green)
+    }
+
+    private func outputCodeBlockOpeningFence(language: String) {
+        // Create emdash sequence with bright red color
+        output.write(ANSICode.brightRed)
+        let emdashCount = 50
+        let trimmedLanguage = language.trimmingCharacters(in: .whitespaces)
+
+        if !trimmedLanguage.isEmpty {
+            // Embed language two emdashes into the sequence
+            let prefix = "——"  // Two emdashes
+            let suffix = String(
+                repeating: "—", count: max(0, emdashCount - prefix.count - trimmedLanguage.count))
+            output.write(prefix + trimmedLanguage + suffix)
+        } else {
+            output.write(String(repeating: "—", count: emdashCount))
+        }
+        output.write(ANSICode.reset)
+
+        // Set cyan color for code content
+        output.write(ANSICode.cyan)
     }
 
     private func restoreActiveFormatting() {
