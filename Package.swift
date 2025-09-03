@@ -12,12 +12,18 @@ let package = Package(
         .executable(
             name: "ANSIMarkdownDemo",
             targets: ["ANSIMarkdownDemo"]),
+        .executable(
+            name: "Format",
+            targets: ["Format"]),
     ],
     targets: [
         .target(
             name: "ANSIMarkdown"),
         .executableTarget(
             name: "ANSIMarkdownDemo",
+            dependencies: ["ANSIMarkdown"]),
+        .executableTarget(
+            name: "Format",
             dependencies: ["ANSIMarkdown"]),
         .testTarget(
             name: "ANSIMarkdownTests",
