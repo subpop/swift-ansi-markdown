@@ -233,7 +233,8 @@ public enum TokenType {
 **Key Features:**
 - **Streaming-friendly**: Processes text incrementally without requiring
   complete documents
-- **Smart tokenization**: Handles multi-character tokens (`**`, `````, `![`, `---`)
+- **Smart tokenization**: Handles multi-character tokens (strong emphasis, code
+  fences, thematic breaks, etc.)
   correctly
 - **Position tracking**: Maintains character positions for debugging
 - **Buffer management**: Efficiently manages processed vs. unprocessed content
